@@ -87,6 +87,14 @@ If you find BLIVA useful for your research and applications, please cite using t
 - [Vicuna](https://github.com/lm-sys/FastChat) Vicuna-13B demonstrates fantastic language ability and it's open source. 
 
 ## License
-This repository is under [BSD 3-Clause License](LICENSE.md).
+This repository's code is under [BSD 3-Clause License](LICENSE.md).
 Many codes are based on [Lavis](https://github.com/salesforce/LAVIS) with 
 BSD 3-Clause License [here](LICENSE_Lavis.md).
+
+For our model parameters of BLIVA FLAN XXL, it's under [Apache 2.0 License](LICENSE_BLIVA_WEIGHT.md). 
+For our YTTB-VQA data, it's under [CC BY NC 4.0](LICENSE_DATA.md)
+
+[![Code License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE.md)
+[![BLIVA FLAN License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](LICENSE_BLIVA_WEIGHT.md)
+[![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](LICENSE_DATA.md)
+
