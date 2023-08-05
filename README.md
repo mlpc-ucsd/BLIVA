@@ -1,16 +1,16 @@
-# BLIVA: Augmenting InstructBLIP for Image-Text Comprehension with Visual Assistent Integration
+# BLIVA: BLIVA: A Simple Multimodal LLM for Better Handling of Text-rich Visual Questions
 [Wenbo Hu*](https://gordonhu608.github.io/), [Yifan Xu*](https://yfxu.com/), [Yi Li](https://jerryli1019.github.io/jerryliyi.github.io/), [Weiyue Li](https://weiyueli7.github.io/), [Zeyuan Chen](https://zeyuan-chen.com/), and [Zhuowen Tu](https://pages.ucsd.edu/~ztu/). *Equal Contribution
 
 **UC San Diego**, **Coinbase Global, Inc.**
 
-<a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='https://arxiv.org/abs'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a> <a href='https://huggingface.co/spaces/gordonhu/BLIVA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Demo-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_Vicuna'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_Vicuna_Model-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_FlanT5'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_FlanT5_Model-blue'></a><a href='https://huggingface.co/datasets/mlpc-lab/YTTB-VQA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Youtube Thumbnails Datasets-blue'></a>
+<a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='https://arxiv.org/abs'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_Vicuna'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_Vicuna_Model-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_FlanT5'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_FlanT5_Model-blue'></a><a href='https://huggingface.co/datasets/mlpc-lab/YTTB-VQA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Youtube Thumbnails Datasets-blue'></a>
 
 <p align="center">
     <a href="https://huggingface.co/spaces/gordonhu/BLIVA"><img src="images/bliva_arch.png" width="90%"></a> <br> Our model architecture in detail with example responses.
 </p>
 
 ## Release (Work in Progress)
-- [8/4] 🔥 We released **BLIVA: Augmenting InstructBLIP for Image-Text Comprehension with Visual Assistent Integration**.  Checkout the [paper](https://arxiv.org/abs) and [demo](https://huggingface.co/spaces/gordonhu/BLIVA).
+- [8/4] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs).
 
 <!-- ## Contents
 - [Install](#installation)
@@ -74,7 +74,7 @@ python evaluate.py --answer_mc \
 If you find BLIVA useful for your research and applications, please cite using this BibTeX:
 ```bibtex
 @misc{hu2023bliva,
-      title={BLIVA: Augmenting InstructBLIP for Image-Text Comprehension with Visual Assistent Integration}, 
+      title={BLIVA: A Simple Multimodal LLM for Better Handling of Text-rich Visual Questions}, 
       author={Wenbo Hu, Yifan Xu, Yi Li, Weiyue Li, Zeyuan Chen, Zhuowen Tu},
       publisher={},
       year={2023},
@@ -91,10 +91,10 @@ This repository's code is under [BSD 3-Clause License](LICENSE.md).
 Many codes are based on [Lavis](https://github.com/salesforce/LAVIS) with 
 BSD 3-Clause License [here](LICENSE_LAVIS.md).
 
-For our model parameters of BLIVA FLAN XXL, it's under [Apache 2.0 License](LICENSE_BLIVA_WEIGHT.md). 
+For our model parameters of BLIVA, it's under [Apache 2.0 License](LICENSE_BLIVA_WEIGHT.md). 
 For our YTTB-VQA data, it's under [CC BY NC 4.0](LICENSE_DATA.md)
 
 [![Code License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE.md)
-[![BLIVA FLAN License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](LICENSE_BLIVA_WEIGHT.md)
+[![BLIVA Weight License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](LICENSE_BLIVA_WEIGHT.md)
 [![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](LICENSE_DATA.md)
 
