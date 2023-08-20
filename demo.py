@@ -94,7 +94,8 @@ def gradio_answer(chatbot, chat_state, img_list, num_beams, temperature):
     return chatbot, chat_state, img_list
 
 title = """<h1 align="center">Demo of BLIVA</h1>"""
-description = """<h3>This is the demo of BLIVA. Upload your images and start chatting!</h3>"""
+description = """<h3>This is the demo of BLIVA. Upload your images and start chatting! <br> To use 
+            example questions, click example image, hit upload, and press enter in the chatbox. </h3>"""
 article = """<p><a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a></p><p><a href='https://github.com/mlpc-ucsd/BLIVA'><img src='https://img.shields.io/badge/Github-Code-blue'></a></p><p><a href='https://raw.githubusercontent.com/'><img src='https://img.shields.io/badge/Paper-PDF-red'></a></p>
 """
 

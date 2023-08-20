@@ -10,7 +10,10 @@
 </p>
 
 ## Release
-- [8/21] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-Rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs).
+- [8/21] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-Rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs) 
+- [8/21] 🔥 We released our demo at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA) which is publicly avaible for everyone to play with. 
+- [8/21] We released our Model weight for BLIVA Vicuna Version at [here](https://huggingface.co/mlpc-lab/BLIVA_Vicuna) and FLAN T5 Version at [here] https://huggingface.co/mlpc-lab/BLIVA_FlanT5. 
+- [8/21] Our Youtube Visual Question Answering Dataset (YTTB-VQA) is available at [here](https://huggingface.co/datasets/mlpc-lab/YTTB-VQA).
 
 <!-- ## Contents
 - [Install](#installation)
@@ -67,7 +70,13 @@ python evaluate.py --answer_mc \
         --question "Which genre does this image belong to?" \
         --candidates "play, tv show, movie"
 ```
+## Demo
 
+Our Demo is publicly available at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA). To run our demo locally on your machine. Run:
+
+```Shell
+python demo.py
+```
 
 ## Citation
 
@@ -91,7 +100,7 @@ This repository's code is under [BSD 3-Clause License](LICENSE.md).
 Many codes are based on [Lavis](https://github.com/salesforce/LAVIS) with 
 BSD 3-Clause License [here](LICENSE_LAVIS.md).
 
-For our model parameters of BLIVA Vicuna Version it's should be used under LLaMA's [model license](https://github.com/facebookresearch/llama/blob/llama_v1/LICENSE). 
+For our model parameters of BLIVA Vicuna Version, it's should be used under LLaMA's [model license](https://github.com/facebookresearch/llama/blob/llama_v1/LICENSE). 
 For the model weight of BLIVA FlanT5, it's under [Apache 2.0 License](LICENSE_BLIVA_FLANT5_WEIGHT.md). 
 For our YTTB-VQA data, it's under [CC BY NC 4.0](LICENSE_DATA.md)
 
