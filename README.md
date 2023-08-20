@@ -6,7 +6,7 @@
 <a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='https://arxiv.org/abs'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a><a href='https://huggingface.co/spaces/mlpc-lab/BLIVA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Demo-blue'></a><a href='https://huggingface.co/mlpc-lab/BLIVA_Vicuna'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_Vicuna_Model-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_FlanT5'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_FlanT5_Model-blue'></a><a href='https://huggingface.co/datasets/mlpc-lab/YTTB-VQA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Youtube Thumbnails Datasets-blue'></a>
 
 <p align="center">
-    <a href="https://huggingface.co/spaces/mlpc-lab/BLIVA"><img src="images/arch.pdf" width="90%"></a> <br> Our model architecture in detail with example responses.
+    <a href="https://huggingface.co/spaces/mlpc-lab/BLIVA"><img src="images/arch.png" width="90%"></a> <br> Our model architecture in detail with example responses.
 </p>
 
 ## Release
