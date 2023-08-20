@@ -136,7 +136,7 @@ with gr.Blocks() as demo:
             text_input = gr.Textbox(label='User', placeholder='Please upload your image first', interactive=False)
             
             gr.Examples(examples=[
-                [f"images/example.jpg", "What is this image about?"],
+                [f"images/example.jpg", "describe this image in detail"],
                 [f"images/img3.jpg", "What is this image about?"],
                 [f"images/img4.jpg", "What is the title of this movie?"],
             ], inputs=[image, text_input])          

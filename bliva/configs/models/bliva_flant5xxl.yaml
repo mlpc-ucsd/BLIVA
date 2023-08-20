@@ -1,11 +1,11 @@
 
 model:
   arch: flant5xxl
-  load_finetuned: True
-  load_pretrained: False
+  load_finetuned: False
+  load_pretrained: True
 
   pretrained: "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/InstructBLIP/instruct_blip_flanxxl_trimmed.pth"
-  finetuned: ' '
+  finetuned: ''
 
   # vit encoder
   image_size: 224
