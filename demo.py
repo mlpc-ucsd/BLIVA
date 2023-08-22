@@ -96,7 +96,7 @@ def gradio_answer(chatbot, chat_state, img_list, num_beams, temperature):
 title = """<h1 align="center">Demo of BLIVA</h1>"""
 description = """<h3>This is the demo of BLIVA. Upload your images and start chatting! <br> To use 
             example questions, click example image, hit upload, and press enter in the chatbox. </h3>"""
-article = """<p><a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a></p><p><a href='https://github.com/mlpc-ucsd/BLIVA'><img src='https://img.shields.io/badge/Github-Code-blue'></a></p><p><a href='https://raw.githubusercontent.com/'><img src='https://img.shields.io/badge/Paper-PDF-red'></a></p>
+article = """<p><a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a></p><p><a href='https://github.com/mlpc-ucsd/BLIVA'><img src='https://img.shields.io/badge/Github-Code-blue'></a></p><p><a href='https://arxiv.org/abs/2308.09936'><img src='https://img.shields.io/badge/Paper-ArXiv-red'></a></p>
 """
 
 #TODO show examples below
