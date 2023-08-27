@@ -11,7 +11,7 @@
 
 ## Release
 - [8/21] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-Rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs/2308.09936). 
-- [8/21] 🔥 We released our demo at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA) which is publicly avaible for everyone to play with. 
+- [8/21] 🔥 We released our demo at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA) which is publicly available for everyone to play with. 
 - [8/21] We released our Model weight for BLIVA Vicuna Version at [here](https://huggingface.co/mlpc-lab/BLIVA_Vicuna) and FLAN T5 Version at [here](https://huggingface.co/mlpc-lab/BLIVA_FlanT5) which is available for commercial use. 
 - [8/21] Our Youtube Visual Question Answering Dataset (YTTB-VQA) is available at [here](https://huggingface.co/datasets/mlpc-lab/YTTB-VQA).
 
