@@ -95,6 +95,8 @@ If you find BLIVA useful for your research and applications, please cite using t
 - [BLIP2](https://huggingface.co/docs/transformers/main/model_doc/blip-2) The model architecture of BLIVA follows BLIP-2. Don't forget to check this great open-source work if you don't know it before. 
 - [Lavis](https://github.com/salesforce/LAVIS) The codebase we built upon.
 - [Vicuna](https://github.com/lm-sys/FastChat) Vicuna-13B demonstrates fantastic language ability and it's open source. 
+- [MultimodalOCR](https://github.com/Yuliang-Liu/MultimodalOCR) A great Mulimodality OCR evaluation pipeline that we followed. 
+- [MME](https://github.com/BradyFU/Awesome-Multimodal-Large-Language-Models/tree/Evaluation) A comprehensive evaluation benchmark for multimodal large language models that we tested our model on. 
 
 ## License
 This repository's code is under [BSD 3-Clause License](LICENSE.md).
