@@ -12,7 +12,7 @@
 ## Release
 - [8/28] 🔥 Our model achieved **No.3** in Perception tasks and **No.2** in Cognition tasks on the [MME benchmark](https://github.com/BradyFU/Awesome-Multimodal-Large-Language-Models/tree/Evaluation), improving 6 positions than our baseline in Perception tasks and 5 positions in Cognition tasks. BLIVA achieved **No.1 in Color, Poster, and Commonsense Reasoning subtasks**. 
 - [8/21] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-Rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs/2308.09936). 
-- [8/21] 🔥 We released our demo at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA) which is publicly available for everyone to play with. 
+- [8/21] 🔥 We released our demo at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA) which is publicly available for everyone to play with. If the huggingface space instance is stopped, feel free to relaunch it. The wait time is around 30s.
 - [8/21] We released our Model weight for BLIVA Vicuna Version at [here](https://huggingface.co/mlpc-lab/BLIVA_Vicuna) and FLAN T5 Version at [here](https://huggingface.co/mlpc-lab/BLIVA_FlanT5) which is available for commercial use. 
 - [8/21] Our Youtube Visual Question Answering Dataset (YTTB-VQA) is available at [here](https://huggingface.co/datasets/mlpc-lab/YTTB-VQA).
 
