@@ -7,7 +7,7 @@
 
 
 <p align="center">
-    <a href="https://huggingface.co/spaces/mlpc-lab/BLIVA"><img src="images/arch.png" width="90%"></a> <br> Our model architecture in detail with example responses.
+    <a href="https://huggingface.co/spaces/mlpc-lab/BLIVA"><img src="docs/images/arch.png" width="90%"></a> <br> Our model architecture in detail with example responses.
 </p>
 
 ## Release
