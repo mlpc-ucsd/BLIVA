@@ -3,13 +3,15 @@
 
 **UC San Diego**, **Coinbase Global, Inc.**
 
-<a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='https://arxiv.org/abs/2308.09936'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a> <a href='https://huggingface.co/spaces/mlpc-lab/BLIVA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Demo-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_Vicuna'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_Vicuna_Model-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_FlanT5'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_FlanT5_Model-blue'></a> <a href='https://huggingface.co/datasets/mlpc-lab/YTTB-VQA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Youtube Thumbnails Datasets-blue'></a>
+<a href='https://gordonhu608.github.io/bliva/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='https://arxiv.org/abs/2308.09936'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a> <a href='https://huggingface.co/spaces/mlpc-lab/BLIVA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Demo-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_Vicuna'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_Vicuna_Model-blue'></a> <a href='https://huggingface.co/mlpc-lab/BLIVA_FlanT5'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-BLIVA_FlanT5_Model-blue'></a> <a href='https://huggingface.co/datasets/mlpc-lab/YTTB-VQA'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Youtube Thumbnails Datasets-blue'></a> <a href='docs/BLIVA Demo.pdf'><img src='https://img.shields.io/badge/Paper-PDF-red'></a> 
+
 
 <p align="center">
     <a href="https://huggingface.co/spaces/mlpc-lab/BLIVA"><img src="images/arch.png" width="90%"></a> <br> Our model architecture in detail with example responses.
 </p>
 
 ## Release
+- [9/06] 🔥 We released a [Demo Slides](docs/BLIVA%20Demo.pdf) for researchers and related workers to learn about BLIVA's abilities and use cases efficiently. 
 - [8/28] 🔥 Our model achieved **No.3** in Perception tasks and **No.2** in Cognition tasks on the [MME benchmark](https://github.com/BradyFU/Awesome-Multimodal-Large-Language-Models/tree/Evaluation), improving 6 positions than our baseline in Perception tasks and 5 positions in Cognition tasks. BLIVA achieved **No.1 in Color, Poster, and Commonsense Reasoning subtasks**. 
 - [8/21] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-Rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs/2308.09936). 
 - [8/21] 🔥 We released our demo at [here](https://huggingface.co/spaces/mlpc-lab/BLIVA) which is publicly available for everyone to play with. If the huggingface space instance is stopped, feel free to relaunch it. The wait time is around 30s.
