@@ -792,11 +792,6 @@ class BLIVAFlanT5(Blip2Base):
             qformer_text_input=qformer_text_input,
         )
 
-        # if qformer_text_input:
-        #     # Hard-coded to load from BLIP-2 stage-1 pre-trained model (not ideal)
-        #     model.load_from_pretrained(
-        #         url_or_filename="https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained.pth"
-        #     )
 
         model.load_checkpoint_from_config(cfg)
 

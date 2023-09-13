@@ -11,6 +11,7 @@
 </p>
 
 ## Release
+- [9/13] 🔥 We released the training code of BLIVA. 
 - [9/06] 🔥 We released a [Demo Slides](docs/BLIVA%20Demo.pdf) for researchers and related workers to learn about BLIVA's abilities and use cases efficiently. 
 - [8/28] 🔥 Our model achieved **No.3** in Perception tasks and **No.2** in Cognition tasks on the [MME benchmark](https://github.com/BradyFU/Awesome-Multimodal-Large-Language-Models/tree/Evaluation), improving 6 positions than our baseline in Perception tasks and 5 positions in Cognition tasks. BLIVA achieved **No.1 in Color, Poster, and Commonsense Reasoning subtasks**. 
 - [8/21] 🔥 We released **BLIVA: A Simple Multimodal LLM for Better Handling of Text-Rich Visual Questions**.  Checkout the [paper](https://arxiv.org/abs/2308.09936). 
@@ -80,6 +81,35 @@ Our Demo is publicly available at [here](https://huggingface.co/spaces/mlpc-lab/
 ```Shell
 python demo.py
 ```
+
+## Train
+
+After downloading the training datasets and specify their path in [dataset configs](bliva/configs/datasets/), we are ready for training. We utilized 8x A6000 Ada in our experiments. Please adjust hyperparamters according to your GPU resources. It may take transformers around 2 minutes to load the model, give some time for the model to start training. Here we give an example of traning BLIVA Vicuna version, the Flant5 version follows the same format.
+
+1. Pretraining of BLIVA's visual assistant branch 
+
+```Shell
+torchrun --nnodes=1 --nproc_per_node=8\
+    train.py \
+    --cfg-path train_configs/pretrain_bliva_vicuna.yaml
+```
+
+2. Instruction Finetuning BLIVA
+
+```Shell
+torchrun --nnodes=1 --nproc_per_node=8\
+    train.py \
+    --cfg-path train_configs/finetune_bliva_vicuna.yaml
+```
+
+Or, we also support training Vicuna7b together with BLIVA using LoRA during the second step, by default we don't use this version. 
+
+```Shell
+torchrun --nnodes=1 --nproc_per_node=8\
+    train.py \
+    --cfg-path train_configs/finetune_bliva_and_vicuna.yaml
+```
+
 
 ## Citation
 

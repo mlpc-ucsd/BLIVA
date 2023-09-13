@@ -1,0 +1,147 @@
+model:
+  arch: bliva_vicuna_lora  
+  model_type: vicuna7b
+  load_finetuned: False
+  load_pretrained: True
+
+  pretrained: "please specify the path to the pretrained model"
+  finetuned: ""
+
+  # vit encoder
+  image_size: 224
+  drop_path_rate: 0
+  use_grad_checkpoint: False
+  vit_precision: "fp16"
+  freeze_vit: True
+
+  # Q-Former
+  num_query_token: 32
+
+  # path to Vicuna checkpoint
+  llm_model: "path to hf_vicuna_7b"
+
+  # generation configs
+  prompt: ""
+
+datasets:
+  ocrvqa:
+    vis_processor:
+        train:
+          name: "blip2_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  coco_vqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  ok_vqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  aok_vqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  coco_caption:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  llavavqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  textcaps:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  vqg_coco_vqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  vqg_ok_vqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+  vqg_aok_vqa:
+    vis_processor:
+        train:
+          name: "blip_image_train"
+          image_size: 224
+    text_processor:
+        train:
+          name: "blip_caption"
+
+run:
+  runner: runner_iter
+
+  task: image_text_pretrain
+  # optimizer
+  lr_sched: "linear_warmup_cosine_lr"
+  init_lr: 1e-5
+  min_lr: 0
+  warmup_lr: 1e-8
+  accum_grad_iters: 3
+
+  weight_decay: 0.05
+  max_epoch: 3
+
+  max_iters: 300000 
+  iters_per_inner_epoch: 150000 
+
+  batch_size_train: 1
+  batch_size_eval: 1 
+  num_workers: 8
+  warmup_steps: 1000
+
+  seed: 42
+  output_dir: "output/finetuned_bliva_and_vicuna/"
+  
+  amp: True
+  resume_ckpt_path: null
+
+  evaluate: False 
+  train_splits: ["train"]
+
+  device: "cuda"
+  world_size: 1
+  dist_url: "env://"
+  distributed: True
+
+  train_dataset_ratios: {ocrvqa:  0.20482112476204395, coco_vqa: 0.15271327995696837,
+    ok_vqa: 0.02175930084085304, aok_vqa: 0.02993954782443368, coco_caption: 0.17258428920102808, llavavqa: 0.1378184390146113, 
+    textcaps: 0.07595188977780638,
+    vqg_coco_vqa: 0.15271327995696837, vqg_ok_vqa: 0.02175930084085304 , vqg_aok_vqa:  0.02993954782443368 }

@@ -376,8 +376,6 @@ class BLIVAVicuna(Blip2Base):
 
         with self.maybe_autocast():
             inputs_embeds = self.llm_model.get_input_embeddings()(llm_tokens.input_ids)
-            # inputs_embeds = torch.cat([inputs_llm, inputs_embeds], dim=1)
-            # attention_mask = torch.cat([atts_llm, llm_tokens.attention_mask], dim=1)
             inputs_embeds = torch.cat([inputs_llm, add_feature_llm, inputs_embeds], dim=1)
             attention_mask = torch.cat([atts_llm, atts_add_feature_llm, llm_tokens['attention_mask']], dim=1)
 
@@ -771,12 +769,6 @@ class BLIVAVicuna(Blip2Base):
             apply_lemmatizer=apply_lemmatizer,
             qformer_text_input=qformer_text_input,
         )
-
-        # if qformer_text_input:
-        #     # Hard-coded to load from BLIP-2 stage-1 pre-trained model (not ideal)
-        #     model.load_from_pretrained(
-        #         url_or_filename="https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained.pth"
-        #     )
 
         model.load_checkpoint_from_config(cfg)
 

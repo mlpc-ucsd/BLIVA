@@ -19,6 +19,67 @@ class Registry:
     }
 
     @classmethod
+    def register_builder(cls, name):
+        r"""Register a dataset builder to registry with key 'name'
+
+        Args:
+            name: Key with which the builder will be registered.
+
+        Usage:
+
+            from bliva.common.registry import registry
+            from bliva.datasets.base_dataset_builder import BaseDatasetBuilder
+        """
+
+        def wrap(builder_cls):
+            from bliva.datasets.builders.base_dataset_builder import BaseDatasetBuilder
+
+            assert issubclass(
+                builder_cls, BaseDatasetBuilder
+            ), "All builders must inherit BaseDatasetBuilder class, found {}".format(
+                builder_cls
+            )
+            if name in cls.mapping["builder_name_mapping"]:
+                raise KeyError(
+                    "Name '{}' already registered for {}.".format(
+                        name, cls.mapping["builder_name_mapping"][name]
+                    )
+                )
+            cls.mapping["builder_name_mapping"][name] = builder_cls
+            return builder_cls
+
+        return wrap
+
+    @classmethod
+    def register_task(cls, name):
+        r"""Register a task to registry with key 'name'
+
+        Args:
+            name: Key with which the task will be registered.
+
+        Usage:
+
+            from bliva.common.registry import registry
+        """
+
+        def wrap(task_cls):
+            from bliva.tasks.base_task import BaseTask
+
+            assert issubclass(
+                task_cls, BaseTask
+            ), "All tasks must inherit BaseTask class"
+            if name in cls.mapping["task_name_mapping"]:
+                raise KeyError(
+                    "Name '{}' already registered for {}.".format(
+                        name, cls.mapping["task_name_mapping"][name]
+                    )
+                )
+            cls.mapping["task_name_mapping"][name] = task_cls
+            return task_cls
+
+        return wrap
+
+    @classmethod
     def register_model(cls, name):
         r"""Register a task to registry with key 'name'
 

@@ -1,3 +1,6 @@
+"""
+Requires Transformer 4.28 and above, implementation may change according the Llama implementation
+"""
 import logging
 import string
 from packaging import version
@@ -10,21 +13,34 @@ import transformers
 
 from bliva.common.registry import registry
 from bliva.models.blip2 import Blip2Base, disabled_train
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    get_peft_model_state_dict,
+    prepare_model_for_int8_training,
+    set_peft_model_state_dict,
+)
+from peft import PeftModel
+from bliva.models.modeling_llama import LlamaForCausalLM
 
-@registry.register_model("blip2_vicuna_instruct")
-class Blip2VicunaInstruct(Blip2Base):
-    """
-    BLIP2 Vicuna model.
-    Supported model types:
-        - vicuna7b
-        - vicuna13b
-    Usage:
-        >>> from bliva.models import load_model
-        >>> model = load_model("blip2_vicuna_instruct", "vicuna7b")
-    """
+def find_all_linear_names(model):
+    cls = torch.nn.Linear
+    lora_module_names = set()
+    for name, module in model.named_modules():
+        if isinstance(module, cls):
+            names = name.split('.')
+            lora_module_names.add(names[0] if len(names) == 1 else names[-1])
+
+    if 'lm_head' in lora_module_names: # needed for 16-bit
+        lora_module_names.remove('lm_head')
+    return list(lora_module_names)
+
+
+@registry.register_model("bliva_vicuna_lora")
+class BlivaVicunaLoRA(Blip2Base):
 
     PRETRAINED_MODEL_CONFIG_DICT = {
-        "vicuna7b": "configs/models/blip2_instruct_vicuna7b.yaml",
+        "vicuna7b": "configs/models/bliva_vicuna7b.yaml",
     }
 
     def __init__(
@@ -35,6 +51,7 @@ class Blip2VicunaInstruct(Blip2Base):
         use_grad_checkpoint=False,
         vit_precision="fp16",
         freeze_vit=True,
+        freeze_qformer=True,
         num_query_token=32,
         llm_model="",
         prompt="",
@@ -54,6 +71,7 @@ class Blip2VicunaInstruct(Blip2Base):
         self.visual_encoder, self.ln_vision = self.init_vision_encoder(
             vit_model, img_size, drop_path_rate, use_grad_checkpoint, vit_precision
         )
+
         if freeze_vit:
             for name, param in self.visual_encoder.named_parameters():
                 param.requires_grad = False
@@ -65,6 +83,14 @@ class Blip2VicunaInstruct(Blip2Base):
             num_query_token, self.visual_encoder.num_features
         )
         
+        if freeze_qformer:
+            self.query_tokens.requires_grad = False
+            
+            for name, param in self.Qformer.named_parameters():
+                param.requires_grad = False
+            self.Qformer = self.Qformer.eval()
+            self.Qformer.train = disabled_train
+            print("freeze Qformer") 
         
         if not qformer_text_input:
             self.Qformer.bert.embeddings.word_embeddings = None
@@ -78,7 +104,7 @@ class Blip2VicunaInstruct(Blip2Base):
 
         self.llm_tokenizer = LlamaTokenizer.from_pretrained(llm_model, use_fast=False, truncation_side="left")
         self.llm_model = LlamaForCausalLM.from_pretrained(
-            llm_model, torch_dtype=torch.float16
+            llm_model, torch_dtype=torch.bfloat16     
         )
         self.llm_tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         self.llm_tokenizer.add_special_tokens({'bos_token': '</s>'})
@@ -109,6 +135,22 @@ class Blip2VicunaInstruct(Blip2Base):
 
         self.qformer_text_input = qformer_text_input
 
+        self.vision_project = nn.Linear(self.visual_encoder.num_features, self.llm_model.config.hidden_size)
+        
+        #lora 
+        self.lora_config =  LoraConfig(
+            r= 64, 
+            lora_alpha=16, 
+            target_modules= find_all_linear_names(self.llm_model),  # ["q_proj", "v_proj"], #['q_proj','k_proj','v_proj','o_proj']
+            lora_dropout=0.05,  
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        
+        self.llm_model = get_peft_model(self.llm_model, self.lora_config)  
+        self.llm_model.print_trainable_parameters()
+        self.llm_model.train() 
+
     def concat_text_input_output(self, input_ids, input_atts, output_ids, output_atts):
         input_part_targets_len = []
         llm_tokens = {"input_ids": [], "attention_mask": []}
@@ -135,16 +177,18 @@ class Blip2VicunaInstruct(Blip2Base):
 
     def forward(self, samples):
         # print('-----------------')
-        #print(samples["text_input"])
+        # print(samples["text_input"])
         # print(samples["text_output"])
         # print(samples["image"].shape)
         # print('-----------------')
-        # if self.query_tokens.grad is not None:
-        #     self.query_tokens.grad.data.zero_()  #
-        # 
-        #self.query_tokens.data.fill_(0)
-        
+
         image = samples["image"]
+
+        image_features= self.visual_encoder.get_intermediate_layers(image)[-2] # [batch_size, 257, 1408]
+        image_features = image_features[:, 1:] 
+        add_feature_llm = self.vision_project(image_features) 
+        atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
+        
         with self.maybe_autocast():
             image_embeds = self.ln_vision(self.visual_encoder(image))
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
@@ -152,7 +196,6 @@ class Blip2VicunaInstruct(Blip2Base):
         bs = image.size(0)
 
         query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
-            #self.query_tokens.expand(image_embeds.shape[0], -1, -1)
         if self.qformer_text_input:
             text_Qformer = self.tokenizer(
                 samples["text_input"],
@@ -222,11 +265,15 @@ class Blip2VicunaInstruct(Blip2Base):
         empty_targets = (
             torch.ones(atts_llm.size(), dtype=torch.long).to(image.device).fill_(-100)
         )
-        targets = torch.cat([empty_targets, targets], dim=1)
+        # do not apply loss to the additional image features
+        empty_add_targets = (
+            torch.ones(atts_add_feature_llm.size(), dtype=torch.long).to(image.device).fill_(-100)
+        )
+        targets = torch.cat([empty_targets, empty_add_targets, targets], dim=1)
 
         inputs_embeds = self.llm_model.get_input_embeddings()(llm_tokens['input_ids'])
-        inputs_embeds = torch.cat([inputs_llm, inputs_embeds], dim=1)
-        attention_mask = torch.cat([atts_llm, llm_tokens['attention_mask']], dim=1)
+        inputs_embeds = torch.cat([inputs_llm, add_feature_llm, inputs_embeds], dim=1)
+        attention_mask = torch.cat([atts_llm, atts_add_feature_llm, llm_tokens['attention_mask']], dim=1)
 
         with self.maybe_autocast():
             outputs = self.llm_model(
@@ -269,16 +316,13 @@ class Blip2VicunaInstruct(Blip2Base):
         #     prompt = [prompt] * bs
         # else:
         #     assert len(prompt) == bs, "The number of prompts must be equal to the batch size."
-
+        
         # For TextCaps
         if "ocr_tokens" in samples.keys() and "{}" in prompt[0]:
             prompt = [p.format(', '.join(samples['ocr_tokens'][i][:30])) for i, p in enumerate(prompt)]
 
         query_tokens = self.query_tokens.expand(bs, -1, -1)
         if self.qformer_text_input:
-            # remove ocr tokens in q_former (for eval textvqa)
-            # qformer_prompt = prompt
-            # qformer_prompt = ['Question: ' + qp.split(' Question: ')[1] for qp in qformer_prompt]
 
             text_Qformer = self.tokenizer(
                 prompt,
@@ -293,13 +337,19 @@ class Blip2VicunaInstruct(Blip2Base):
         # For video data
         if image.dim() == 5:
             inputs_llm, atts_llm = [], []
+            add_inputs_llm, add_atts_llm = [], []
             for j in range(image.size(2)):
                 this_frame = image[:,:,j,:,:]
                 with self.maybe_autocast():
                     frame_embeds = self.ln_vision(self.visual_encoder(this_frame))
+                    frame_features =self.visual_encoder.get_intermediate_layers(this_frame)[-2]
+                    
                 frame_atts = torch.ones(frame_embeds.size()[:-1], dtype=torch.long).to(image.device)
-    
-
+                frame_features = frame_features[:, 1:] 
+        
+                add_feature_llm = self.vision_project(frame_features) 
+                atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
+        
                 if self.qformer_text_input:
                     frame_query_output = self.Qformer.bert(
                         text_Qformer.input_ids,
@@ -320,12 +370,23 @@ class Blip2VicunaInstruct(Blip2Base):
                 frame_atts_llm = torch.ones(frame_inputs_llm.size()[:-1], dtype=torch.long).to(image.device)
                 inputs_llm.append(frame_inputs_llm)
                 atts_llm.append(frame_atts_llm)
+                add_inputs_llm.append(add_feature_llm)
+                add_atts_llm.append(atts_add_feature_llm)
             inputs_llm = torch.cat(inputs_llm, dim=1)
             atts_llm = torch.cat(atts_llm, dim=1)
+            add_feature_llm = torch.cat(add_inputs_llm, dim=1)
+            atts_add_feature_llm = torch.cat(add_atts_llm, dim=1)
         else:
             with self.maybe_autocast():
                 image_embeds = self.ln_vision(self.visual_encoder(image))
+
+                image_features= self.visual_encoder.get_intermediate_layers(image)[-2] # [batch_size, 257, 1408]
+                
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
+           
+            image_features = image_features[:, 1:] 
+            add_feature_llm = self.vision_project(image_features) 
+            atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
 
             if self.qformer_text_input:
                 query_output = self.Qformer.bert(
@@ -355,8 +416,8 @@ class Blip2VicunaInstruct(Blip2Base):
 
         with self.maybe_autocast():
             inputs_embeds = self.llm_model.get_input_embeddings()(llm_tokens.input_ids)
-            inputs_embeds = torch.cat([inputs_llm, inputs_embeds], dim=1)
-            attention_mask = torch.cat([atts_llm, llm_tokens.attention_mask], dim=1)
+            inputs_embeds = torch.cat([inputs_llm, add_feature_llm, inputs_embeds], dim=1)
+            attention_mask = torch.cat([atts_llm, atts_add_feature_llm, llm_tokens['attention_mask']], dim=1)
 
             outputs = self.llm_model.generate(
                 inputs_embeds=inputs_embeds,
@@ -457,8 +518,6 @@ class Blip2VicunaInstruct(Blip2Base):
                 if 'caption' in samples.keys():
                     this_sample['caption'] = [samples["caption"][i]]
 
-                # print(this_sample['image'].size(0), type(this_sample['prompt']), len(this_sample['prompt']))
-
                 this_result = self._predict_class(this_sample, candidates[i], n_segments)
                 results.append(this_result)
 
@@ -516,14 +575,22 @@ class Blip2VicunaInstruct(Blip2Base):
             query_atts = torch.ones(query_tokens.size()[:-1], dtype=torch.long).to(image.device)
             Qformer_atts = torch.cat([query_atts, text_Qformer.attention_mask], dim=1)
 
+        # For video data
         if image.dim() == 5:
             inputs_llm, atts_llm = [], []
+            add_inputs_llm, add_atts_llm = [], []
             for j in range(image.size(2)):
                 this_frame = image[:,:,j,:,:]
                 with self.maybe_autocast():
                     frame_embeds = self.ln_vision(self.visual_encoder(this_frame))
-                    frame_atts = torch.ones(frame_embeds.size()[:-1], dtype=torch.long).to(image.device)
-
+                    frame_features =self.visual_encoder.get_intermediate_layers(this_frame)[-2]
+                    
+                frame_atts = torch.ones(frame_embeds.size()[:-1], dtype=torch.long).to(image.device)
+                frame_features = frame_features[:, 1:] 
+        
+                add_feature_llm = self.vision_project(frame_features) 
+                atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
+        
                 if self.qformer_text_input:
                     frame_query_output = self.Qformer.bert(
                         text_Qformer.input_ids,
@@ -540,17 +607,27 @@ class Blip2VicunaInstruct(Blip2Base):
                         encoder_attention_mask=frame_atts,
                         return_dict=True,
                     )
-
                 frame_inputs_llm = self.llm_proj(frame_query_output.last_hidden_state[:,:query_tokens.size(1),:])
                 frame_atts_llm = torch.ones(frame_inputs_llm.size()[:-1], dtype=torch.long).to(image.device)
                 inputs_llm.append(frame_inputs_llm)
                 atts_llm.append(frame_atts_llm)
+                add_inputs_llm.append(add_feature_llm)
+                add_atts_llm.append(atts_add_feature_llm)
             inputs_llm = torch.cat(inputs_llm, dim=1)
             atts_llm = torch.cat(atts_llm, dim=1)
+            add_feature_llm = torch.cat(add_inputs_llm, dim=1)
+            atts_add_feature_llm = torch.cat(add_atts_llm, dim=1)
         else:
             with self.maybe_autocast():
                 image_embeds = self.ln_vision(self.visual_encoder(image))
+
+                image_features= self.visual_encoder.get_intermediate_layers(image)[-2] # [batch_size, 257, 1408]
+                
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
+           
+            image_features = image_features[:, 1:] 
+            add_feature_llm = self.vision_project(image_features) 
+            atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
 
             if self.qformer_text_input:
                 query_output = self.Qformer.bert(
@@ -583,7 +660,9 @@ class Blip2VicunaInstruct(Blip2Base):
         ).to(image.device)
 
         empty_targets = torch.ones(atts_llm.size(), dtype=torch.long).to(image.device).fill_(-100)
-
+        empty_add_targets = (
+            torch.ones(atts_add_feature_llm.size(), dtype=torch.long).to(image.device).fill_(-100)
+        )
         # self.llm_tokenizer.padding_side = "right"
         self.llm_tokenizer.truncation_side = 'right'
         n_cands = len(candidates)
@@ -624,15 +703,18 @@ class Blip2VicunaInstruct(Blip2Base):
                 # this_llm_atts = torch.cat([this_input_tokens_atts, this_output_tokens_atts], dim=1)
 
                 inputs_embeds = self.llm_model.get_input_embeddings()(this_llm_input_ids)
-                inputs_embeds = torch.cat([inputs_llm.repeat_interleave(seg_len, dim=0), inputs_embeds], dim=1)
-                attention_mask = torch.cat([atts_llm.repeat_interleave(seg_len, dim=0), this_llm_atts], dim=1)
+                inputs_embeds = torch.cat([inputs_llm.repeat_interleave(seg_len, dim=0), \
+                    add_feature_llm.repeat_interleave(seg_len, dim=0), inputs_embeds], dim=1)
+                attention_mask = torch.cat([atts_llm.repeat_interleave(seg_len, dim=0), \
+                    atts_add_feature_llm.repeat_interleave(seg_len, dim=0)  ,this_llm_atts], dim=1)
 
                 this_targets = this_llm_input_ids.masked_fill(this_llm_input_ids == self.llm_tokenizer.pad_token_id, -100)
                 # this_targets[:, :this_input_tokens_ids.size(1)] = -100
                 for i, l in enumerate(this_input_targets_len):
                     this_targets[i][:l] = -100
 
-                this_targets = torch.cat([empty_targets.repeat_interleave(seg_len, dim=0), this_targets], dim=1)
+                this_targets = torch.cat([empty_targets.repeat_interleave(seg_len, dim=0), \
+                    empty_add_targets.repeat_interleave(seg_len, dim=0) ,this_targets], dim=1)
 
                 outputs = self.llm_model(
                     inputs_embeds=inputs_embeds,
@@ -647,6 +729,7 @@ class Blip2VicunaInstruct(Blip2Base):
                 loss = loss.reshape(bs, seg_len)
                 # output_class_ranks = torch.argsort(loss, dim=-1)
                 all_losses.append(loss)
+
             all_losses = torch.cat(all_losses, dim=-1)
             output_class_ranks = torch.argsort(all_losses, dim=-1)
 
@@ -700,7 +783,8 @@ class Blip2VicunaInstruct(Blip2Base):
         use_grad_checkpoint = cfg.get("use_grad_checkpoint", False)
         vit_precision = cfg.get("vit_precision", "fp16")
         freeze_vit = cfg.get("freeze_vit", True)
-
+        freeze_qformer = cfg.get("freeze_qformer", True)
+         
         prompt = cfg.get("prompt", "")
         max_txt_len = cfg.get("max_txt_len", 128)
         max_output_txt_len = cfg.get("max_output_txt_len", 256)
@@ -716,6 +800,7 @@ class Blip2VicunaInstruct(Blip2Base):
             use_grad_checkpoint=use_grad_checkpoint,
             vit_precision=vit_precision,
             freeze_vit=freeze_vit,
+            freeze_qformer=freeze_qformer,
             num_query_token=num_query_token,
             llm_model=llm_model,
             prompt=prompt,
@@ -725,7 +810,6 @@ class Blip2VicunaInstruct(Blip2Base):
             qformer_text_input=qformer_text_input,
         )
 
-        model.load_checkpoint_from_config(cfg) 
+        model.load_checkpoint_from_config(cfg)
 
-        #model = model.to(dtype = torch.bfloat16)
         return model

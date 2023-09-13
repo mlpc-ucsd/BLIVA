@@ -16,7 +16,9 @@ from bliva.models.blip2 import Blip2Base
 from bliva.models.blip2_vicuna_instruct import Blip2VicunaInstruct
 from bliva.models.bliva_flant5xxl import BLIVAFlanT5
 from bliva.models.bliva_vicuna7b import BLIVAVicuna
-
+from bliva.models.pretrain_bliva_vicuna7b import PretrainBLIVAVicuna
+from bliva.models.pretrain_bliva_flant5 import PretrainBlivaT5
+from bliva.models.bliva_vicuna7b_lora import BlivaVicunaLoRA
 from bliva.models.vit import VisionTransformerEncoder
 
 
@@ -30,6 +32,9 @@ __all__ = [
     "Blip2VicunaInstruct",
     "BLIVAFlanT5",
     "BLIVAVicuna",
+    "PretrainBLIVAVicuna",
+    "PretrainBlivaT5",
+    "BlivaVicunaLoRA",
 ]
 
 
