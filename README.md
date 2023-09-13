@@ -89,7 +89,7 @@ After downloading the training datasets and specify their path in [dataset confi
 1. Pretraining of BLIVA's visual assistant branch 
 
 ```Shell
-torchrun --nnodes=1 --nproc_per_node=8\
+torchrun --nnodes=1 --nproc_per_node=8 \
     train.py \
     --cfg-path train_configs/pretrain_bliva_vicuna.yaml
 ```
@@ -97,7 +97,7 @@ torchrun --nnodes=1 --nproc_per_node=8\
 2. Instruction Finetuning BLIVA
 
 ```Shell
-torchrun --nnodes=1 --nproc_per_node=8\
+torchrun --nnodes=1 --nproc_per_node=8 \
     train.py \
     --cfg-path train_configs/finetune_bliva_vicuna.yaml
 ```
@@ -105,7 +105,7 @@ torchrun --nnodes=1 --nproc_per_node=8\
 Or, we also support training Vicuna7b together with BLIVA using LoRA during the second step, by default we don't use this version. 
 
 ```Shell
-torchrun --nnodes=1 --nproc_per_node=8\
+torchrun --nnodes=1 --nproc_per_node=8 \
     train.py \
     --cfg-path train_configs/finetune_bliva_and_vicuna.yaml
 ```
