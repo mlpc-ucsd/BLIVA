@@ -151,7 +151,7 @@
     <td>19.22</td>
   </tr>
     <tr>
-    <td>BLIVA (FLANT5 XXL)</td>
+    <td>BLIVA (FLANT5XXL)</td>
     <td>28.24</td>
     <td>61.34</td>
     <td>39.36</td>
