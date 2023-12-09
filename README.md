@@ -11,6 +11,7 @@
 </p>
 
 ## Release
+- [12/08] 🔥 BLIVA is accepted by AAAI 2024.
 - [9/13] 🔥 We released the training code of BLIVA. 
 - [9/06] 🔥 We released a [Demo Slides](docs/BLIVA%20Demo.pdf) for researchers and related workers to learn about BLIVA's abilities and use cases efficiently. 
 - [8/28] 🔥 Our model achieved **No.3** in Perception tasks and **No.2** in Cognition tasks on the [MME benchmark](https://github.com/BradyFU/Awesome-Multimodal-Large-Language-Models/tree/Evaluation), improving 6 positions than our baseline in Perception tasks and 5 positions in Cognition tasks. BLIVA achieved **No.1 in Color, Poster, and Commonsense Reasoning subtasks**. 
