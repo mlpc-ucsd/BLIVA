@@ -21,6 +21,7 @@ class PretrainBLIVAMistral(Blip2Base):
     PRETRAINED_MODEL_CONFIG_DICT = {
         "mistral7b": "configs/models/bliva_mistral7b.yaml",
     }
+    
     def __init__(
         self,
         vit_model="eva_clip_g",
