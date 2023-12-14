@@ -213,9 +213,9 @@ class LLaVAPretrainDataset(BaseDataset):
 
         image = self.vis_processor(image)
         
-        text_input  = self.text_processor(ann["text_input"]) 
+        text_input  = self.text_processor(ann["conversations"][0]["value"]) 
         
-        text_output = ann['text_output']
+        text_output = ann["conversations"][1]["value"]
         
         return {
             "image": image,
