@@ -402,7 +402,7 @@ def is_url(input_url):
     Check if an input string is a url. look for http(s):// and ignoring the case
     """
     print("..............................................")
-    print(is_url)
+    print(input_url)
     
     is_url = re.match(r"^(?:http)s?://", input_url, re.IGNORECASE) is not None
     return is_url
