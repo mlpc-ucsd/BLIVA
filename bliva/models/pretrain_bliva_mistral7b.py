@@ -59,7 +59,7 @@ class PretrainBLIVAMistral(Blip2Base):
         # Adding Mistral 
         self.llm_tokenizer = AutoTokenizer.from_pretrained(llm_model)
         self.llm_model = MistralForCausalLM.from_pretrained(
-            llm_model, trust_remote_code=True
+            llm_model, torch_dtype=torch.float16
         )
         self.llm_tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         self.tokenizer.padding_side = "right"
@@ -161,7 +161,7 @@ class PretrainBLIVAMistral(Blip2Base):
         inputs_embeds = self.llm_model.get_input_embeddings()(llm_tokens['input_ids'])
         inputs_embeds = torch.cat([add_feature_llm, inputs_embeds], dim=1)
         attention_mask = torch.cat([atts_add_feature_llm, llm_tokens['attention_mask']], dim=1)
-
+        
         with self.maybe_autocast():
             outputs = self.llm_model(
                 inputs_embeds=inputs_embeds,
