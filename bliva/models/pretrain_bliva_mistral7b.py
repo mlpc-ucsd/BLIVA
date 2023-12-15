@@ -13,7 +13,10 @@ import transformers
 
 from bliva.common.registry import registry
 from bliva.models.blip2 import Blip2Base, disabled_train
+from mplug_owl2.model.builder import load_pretrained_model
+from mplug_owl2.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
+import time
 
 @registry.register_model("pretrain_bliva_mistral")
 class PretrainBLIVAMistral(Blip2Base):
@@ -41,28 +44,41 @@ class PretrainBLIVAMistral(Blip2Base):
         super().__init__()
         transformers_version = version.parse(transformers.__version__)
         assert transformers_version >= version.parse("4.28"), "BLIP-2 Vicuna requires transformers>=4.28"        
-        from transformers import MistralForCausalLM, AutoTokenizer
-
+        from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaTokenizer
+        # from bliva.models.modelling_mistral import MistralForCausalLM
         self.tokenizer = self.init_tokenizer(truncation_side="left")
 
-        self.visual_encoder, self.ln_vision = self.init_vision_encoder(
-            vit_model, img_size, drop_path_rate, use_grad_checkpoint, vit_precision
-        )
+        
+        model_path = 'MAGAer13/mplug-owl2-llama2-7b'
+        
+        # model_name = get_model_name_from_path(model_path)
+        # tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, None, model_name, load_8bit=False, load_4bit=False, device="cuda")
+        model = AutoModelForCausalLM.from_pretrained(model_path)
+        
+        # self.visual_encoder, self.ln_vision = self.init_vision_encoder(
+        #     vit_model, img_size, drop_path_rate, use_grad_checkpoint, vit_precision
+        # )
 
+        self.visual_encoder = model.get_model().vision_model
+        
         if freeze_vit:
             for name, param in self.visual_encoder.named_parameters():
                 param.requires_grad = False
-            self.visual_encoder = self.visual_encoder.eval()
-            self.visual_encoder.train = disabled_train
+            # self.visual_encoder = self.visual_encoder.eval()
+            # self.visual_encoder.train = disabled_train
             logging.info("freeze vision encoder")
 
         # Adding Mistral 
-        self.llm_tokenizer = AutoTokenizer.from_pretrained(llm_model)
-        self.llm_model = MistralForCausalLM.from_pretrained(
-            llm_model, torch_dtype=torch.float16
+        self.llm_tokenizer = AutoTokenizer.from_pretrained(llm_model, truncation_side="left", trust_remote_code=True)
+        self.llm_model = AutoModelForCausalLM.from_pretrained(
+            llm_model, torch_dtype=torch.float16, trust_remote_code=True
         )
         self.llm_tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-        self.tokenizer.padding_side = "right"
+        self.llm_tokenizer.add_special_tokens({'bos_token': '<s>'})
+        self.llm_tokenizer.add_special_tokens({'eos_token': '</s>'})
+        self.llm_tokenizer.add_special_tokens({'unk_token': '<unk>'})
+        self.llm_model.resize_token_embeddings(len(self.llm_tokenizer))
+        # self.tokenizer.padding_side = "right"
     
 
         # self.eos_token_id = self.llm_tokenizer(
@@ -74,15 +90,15 @@ class PretrainBLIVAMistral(Blip2Base):
 
         self.max_txt_len = max_txt_len
         self.max_output_txt_len = max_output_txt_len
-        self.prompt = prompt
-        prompt_tokens = self.llm_tokenizer(self.prompt, return_tensors="pt")
-        self.prompt_length = prompt_tokens.attention_mask.sum(1)
+        # self.prompt = prompt
+        # prompt_tokens = self.llm_tokenizer(self.prompt, return_tensors="pt")
+        # self.prompt_length = prompt_tokens.attention_mask.sum(1)
 
         self._lemmatizer = None
 
         self.qformer_text_input = qformer_text_input
         
-        self.vision_project = nn.Linear(self.visual_encoder.num_features, self.llm_model.config.hidden_size)
+        self.vision_project = nn.Linear(1024, self.llm_model.config.hidden_size)
 
         
     def concat_text_input_output(self, input_ids, input_atts, output_ids, output_atts):
@@ -110,11 +126,10 @@ class PretrainBLIVAMistral(Blip2Base):
         return llm_tokens, input_part_targets_len
 
     def forward(self, samples):
-
         image = samples["image"]
         
-        image_features= self.visual_encoder.get_intermediate_layers(image)[-2] # [batch_size, 257, 1408]
-        image_features = image_features[:, 1:] 
+        image_features= self.visual_encoder(image) # [batch_size, 257, 1024]
+        image_features = image_features.last_hidden_state[:, 1:] 
         add_feature_llm = self.vision_project(image_features) 
         atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
         
@@ -127,7 +142,7 @@ class PretrainBLIVAMistral(Blip2Base):
             truncation=True,
             max_length=self.max_txt_len,
         ).to(image.device)
-
+        
         self.llm_tokenizer.truncation_side = 'right'
         text_output_tokens = self.llm_tokenizer(
             [t + self.llm_tokenizer.eos_token for t in samples['text_output']],
@@ -148,7 +163,7 @@ class PretrainBLIVAMistral(Blip2Base):
         targets = llm_tokens['input_ids'].masked_fill(
             llm_tokens['input_ids'] == self.llm_tokenizer.pad_token_id, -100
         )
-
+        
         # do not apply loss to the text input (i.e., instruction)
         for i, l in enumerate(input_part_targets_len):
             targets[i][:l] = -100
@@ -156,14 +171,16 @@ class PretrainBLIVAMistral(Blip2Base):
         empty_add_targets = (
             torch.ones(atts_add_feature_llm.size(), dtype=torch.long).to(image.device).fill_(-100)
         )
-        targets = torch.cat([empty_add_targets, targets], dim=1)
+        
+        targets = torch.cat((empty_add_targets, targets), dim=1)
 
         inputs_embeds = self.llm_model.get_input_embeddings()(llm_tokens['input_ids'])
-        inputs_embeds = torch.cat([add_feature_llm, inputs_embeds], dim=1)
-        attention_mask = torch.cat([atts_add_feature_llm, llm_tokens['attention_mask']], dim=1)
+        
+        inputs_embeds = torch.cat((add_feature_llm, inputs_embeds), dim=1)
+        attention_mask = torch.cat((atts_add_feature_llm, llm_tokens['attention_mask']), dim=1)
         
         with self.maybe_autocast():
-            outputs = self.llm_model(
+            outputs = self.llm_model.forward(
                 inputs_embeds=inputs_embeds,
                 attention_mask=attention_mask,
                 return_dict=True,
@@ -247,6 +264,6 @@ class PretrainBLIVAMistral(Blip2Base):
             qformer_text_input=qformer_text_input,
         )
 
-        model.load_checkpoint_from_config(cfg)
+        # model.load_checkpoint_from_config(cfg)
 
         return model

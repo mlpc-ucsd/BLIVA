@@ -19,7 +19,7 @@ model:
   num_query_token: 32
 
   # path to Vicuna checkpoint
-  llm_model: "mistralai/Mistral-7B-Instruct-v0.2"
+  llm_model: "mistralai/Mistral-7B-v0.1"
 
   # generation configs
   prompt: ""
@@ -48,13 +48,13 @@ run:
   max_epoch: 3 
   accum_grad_iters: 1
 
-  batch_size_train: 8 
+  batch_size_train: 8
   batch_size_eval: 1 
   num_workers: 8 
   warmup_steps: 1000
 
   seed: 42
-  output_dir: "output/pretrain_bliva_vicuna/"
+  output_dir: "output/pretrain_bliva_owl_mistral_558k/"
 
   amp: True
   resume_ckpt_path: null
