@@ -98,7 +98,7 @@ class PretrainBLIVAMistral(Blip2Base):
 
         self.qformer_text_input = qformer_text_input
         
-        self.vision_project = nn.Linear(1024, self.llm_model.config.hidden_size)
+        self.vision_project = nn.Linear(self.visual_encoder.config.hidden_size, self.llm_model.config.hidden_size)
 
         
     def concat_text_input_output(self, input_ids, input_atts, output_ids, output_atts):
@@ -180,7 +180,7 @@ class PretrainBLIVAMistral(Blip2Base):
         attention_mask = torch.cat((atts_add_feature_llm, llm_tokens['attention_mask']), dim=1)
         
         with self.maybe_autocast():
-            outputs = self.llm_model.forward(
+            outputs = self.llm_model(
                 inputs_embeds=inputs_embeds,
                 attention_mask=attention_mask,
                 return_dict=True,

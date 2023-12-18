@@ -21,7 +21,7 @@ from bliva.models.pretrain_bliva_flant5 import PretrainBlivaT5
 from bliva.models.bliva_vicuna7b_lora import BlivaVicunaLoRA
 from bliva.models.vit import VisionTransformerEncoder
 from bliva.models.pretrain_bliva_mistral7b import PretrainBLIVAMistral
-
+from bliva.models.bliva_mistral7b import BLIVAMistral
 from bliva.processors.base_processor import BaseProcessor
 
 
@@ -35,7 +35,8 @@ __all__ = [
     "PretrainBLIVAVicuna",
     "PretrainBlivaT5",
     "BlivaVicunaLoRA",
-    "PretrainBLIVAMistral"
+    "PretrainBLIVAMistral",
+    "BLIVAMistral"
 ]
 
 
