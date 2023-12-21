@@ -98,7 +98,9 @@ class PretrainBLIVAMistral(Blip2Base):
 
         self.qformer_text_input = qformer_text_input
         
-        self.vision_project = nn.Linear(self.visual_encoder.config.hidden_size, self.llm_model.config.hidden_size)
+        #Vision Projection Layer 
+        self.vision_projection_layer_1 = nn.Linear(self.visual_encoder.config.hidden_size, 1408)
+        self.vision_projection_layer_2 = nn.Linear(1408, self.llm_model.config.hidden_size)
 
         
     def concat_text_input_output(self, input_ids, input_atts, output_ids, output_atts):
@@ -130,7 +132,7 @@ class PretrainBLIVAMistral(Blip2Base):
         
         image_features= self.visual_encoder(image) # [batch_size, 257, 1024]
         image_features = image_features.last_hidden_state[:, 1:] 
-        add_feature_llm = self.vision_project(image_features) 
+        add_feature_llm = self.vision_projection_layer_2(self.vision_projection_layer_1(image_features))
         atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
         
         self.llm_tokenizer.padding_side = "right"

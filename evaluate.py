@@ -73,6 +73,8 @@ def main(args):
         model, vis_processors, _ = load_model_and_preprocess(name=args.model_name, model_type="vicuna7b", is_eval=True, device=args.device)
     if args.model_name == "bliva_flant5":
         model, vis_processors, _ = load_model_and_preprocess(name=args.model_name, model_type="flant5xxl", is_eval=True, device=args.device)
+    if args.model_name == "bliva_mistral":
+        model, vis_processors, _ = load_model_and_preprocess(name=args.model_name, model_type="mistral7b", is_eval=True, device=args.device)
     vis_processor = vis_processors["eval"]
     
     image = Image.open(args.img_path).convert('RGB')

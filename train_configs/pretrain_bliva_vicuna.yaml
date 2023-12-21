@@ -19,7 +19,7 @@ model:
   num_query_token: 32
 
   # path to Vicuna checkpoint
-  llm_model: "path to Vicuna checkpoint"
+  llm_model: "huggyllama/llama-7b"
 
   # generation configs
   prompt: ""

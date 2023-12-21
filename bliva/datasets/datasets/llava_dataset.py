@@ -18,13 +18,13 @@ class LLAVADataset(BaseDataset):
     def __getitem__(self, index):
         ann = self.annotation[index]
 
-        image_path = os.path.join(self.vis_root, 'train2014/COCO_train2014_' + ann["image"])
+        image_path = os.path.join(self.vis_root, 'train2017/' + ann["image"])
         image = Image.open(image_path).convert("RGB")
 
         image = self.vis_processor(image)
-        question = self.text_processor(ann["question"])
+        question = self.text_processor(ann['conversations'][0]["value"])
 
-        answer = ann["answer"]
+        answer = ann['conversations'][1]["value"]
 
         return {
             "image": image,

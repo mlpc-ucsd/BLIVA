@@ -42,14 +42,14 @@ class BaseModel(nn.Module):
             checkpoint = torch.load(url_or_filename, map_location="cpu")
         else:
             raise RuntimeError("checkpoint url or path is invalid")
-
+        print("*********Checkpoint in the saved model**********", checkpoint.keys())
         if "model" in checkpoint.keys():
             state_dict = checkpoint["model"]
         else:
             state_dict = checkpoint
 
         msg = self.load_state_dict(state_dict, strict=False)
-
+        print(msg)
         logging.info("Missing keys {}".format(msg.missing_keys))
         logging.info("load checkpoint from %s" % url_or_filename)
 

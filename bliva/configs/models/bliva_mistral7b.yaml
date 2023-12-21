@@ -1,11 +1,12 @@
 
 model:
-  arch: mistral7b
+  arch: bliva_mistral
+  model_type: mistral7b
   load_finetuned: True 
   load_pretrained: False
 
   # pretrained: "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/InstructBLIP/instruct_blip_vicuna7b_trimmed.pth"
-  # finetuned: 'path to bliva_vicuna7b model weight'
+  finetuned: '/workspace/BLIVA/bliva/output/finetuned_bliva_mistral_on_instruct/20231220151/checkpoint_1.pth'
 
   # vit encoder
   image_size: 224
@@ -18,7 +19,7 @@ model:
   num_query_token: 32
 
   # path to Vicuna checkpoint
-  llm_model: "path to vicuna checkpoint"
+  llm_model: "mistralai/Mistral-7B-Instruct-v0.2"
 
   # generation configs
   prompt: ""

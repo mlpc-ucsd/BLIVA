@@ -9,15 +9,16 @@ Requires Transformer <= 4.36.1 for supporting Mistral 7B
 import logging
 import string
 from packaging import version
+import copy
 
 import torch
 from torch.cuda.amp import autocast as autocast
 import torch.nn as nn
 
 import transformers
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, InstructBlipForConditionalGeneration
 from bliva.common.registry import registry
-from bliva.models.blip2 import Blip2Base, disabled_train
+from bliva.models.blip2 import Blip2Base, disabled_train, LayerNorm
 
 @registry.register_model("bliva_mistral")
 class BLIVAMistral(Blip2Base):
@@ -58,9 +59,30 @@ class BLIVAMistral(Blip2Base):
                 param.requires_grad = False
             logging.info("freeze vision encoder")
 
-        self.Qformer, self.query_tokens = self.init_Qformer(
-            num_query_token, self.visual_encoder.config.hidden_size
-        )
+        # Loading Pretrained weights of InstructBlip
+        instruct_blip_model = InstructBlipForConditionalGeneration.from_pretrained("Salesforce/instructblip-flan-t5-xl")
+        self.Qformer = instruct_blip_model.qformer
+        self.query_tokens = instruct_blip_model.query_tokens
+
+        print("************** printing name of the model *****************")
+
+        # Q-Former named params 
+        qformer_params_cache = {}
+        for name, param in self.Qformer.named_parameters():
+            qformer_params_cache[name] = True
+
+
+        print(qformer_params_cache)
+        
+        for name, param in instruct_blip_model.named_parameters():
+            if name not in qformer_params_cache:
+                param.requires_grad = False
+            else:
+                continue
+        
+        # self.Qformer, self.query_tokens = self.init_Qformer(
+        #     num_query_token, self.visual_encoder.config.hidden_size
+        # )
 
         if not qformer_text_input:
             self.Qformer.bert.embeddings.word_embeddings = None
@@ -105,8 +127,14 @@ class BLIVAMistral(Blip2Base):
 
         self.qformer_text_input = qformer_text_input
 
-        self.vision_project = nn.Linear(self.visual_encoder.config.hidden_size, self.llm_model.config.hidden_size)
+        # self.vision_project = nn.Linear(self.visual_encoder.config.hidden_size, self.llm_model.config.hidden_size)
+        self.vision_projection_layer_1 = nn.Linear(self.visual_encoder.config.hidden_size, 1408)
+        self.vision_projection_layer_2 = nn.Linear(1408, self.llm_model.config.hidden_size)
 
+        #Overriding
+        self.ln_vision = LayerNorm(self.visual_encoder.config.hidden_size)
+
+        
     def concat_text_input_output(self, input_ids, input_atts, output_ids, output_atts):
         input_part_targets_len = []
         llm_tokens = {"input_ids": [], "attention_mask": []}
@@ -140,13 +168,20 @@ class BLIVAMistral(Blip2Base):
 
         image = samples["image"]
 
-        image_features= self.visual_encoder(image) # [batch_size, 257, 1024]
+        # image_features= self.visual_encoder(image, output_hidden_states = True)
+        # print(len(image_features.hidden_states))
+        # for tens in image_features.hidden_states:
+        #     print(tens.size())
+        
+        image_features= self.visual_encoder(image, output_hidden_states = True).last_hidden_state # [batch_size, 257, 1024]
+        
         image_features = image_features[:, 1:] 
-        add_feature_llm = self.vision_project(image_features) 
+        add_feature_llm = self.vision_projection_layer_2(self.vision_projection_layer_1(image_features)) 
         atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
         
         with self.maybe_autocast():
-            image_embeds = self.ln_vision(self.visual_encoder(image))
+            image_embeds = self.ln_vision(image_features)
+        image_embeds = self.vision_projection_layer_1(image_embeds) # projected -> [batch_size, 257, 1408]
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
 
         bs = image.size(0)
@@ -163,7 +198,7 @@ class BLIVAMistral(Blip2Base):
             query_atts = torch.ones(query_tokens.size()[:-1], dtype=torch.long).to(image.device)
             Qformer_atts = torch.cat([query_atts, text_Qformer.attention_mask],dim=1)
 
-            query_output = self.Qformer.bert(
+            query_output = self.Qformer(
                 text_Qformer.input_ids,
                 attention_mask=Qformer_atts,
                 query_embeds=query_tokens,
@@ -172,7 +207,7 @@ class BLIVAMistral(Blip2Base):
                 return_dict=True,
             )
         else:
-            query_output = self.Qformer.bert(
+            query_output = self.Qformer(
                 query_embeds=query_tokens,
                 encoder_hidden_states=image_embeds,
                 encoder_attention_mask=image_atts,
@@ -250,7 +285,7 @@ class BLIVAMistral(Blip2Base):
     def generate(
         self,
         samples,
-        use_nucleus_sampling=False,
+        use_nucleus_sampling=True,
         num_beams=5,
         max_length=256,
         min_length=1,
@@ -316,7 +351,7 @@ class BLIVAMistral(Blip2Base):
                 atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
         
                 if self.qformer_text_input:
-                    frame_query_output = self.Qformer.bert(
+                    frame_query_output = self.Qformer(
                         text_Qformer.input_ids,
                         attention_mask=Qformer_atts,
                         query_embeds=query_tokens,
@@ -325,7 +360,7 @@ class BLIVAMistral(Blip2Base):
                         return_dict=True,
                     )
                 else:
-                    frame_query_output = self.Qformer.bert(
+                    frame_query_output = self.Qformer(
                         query_embeds=query_tokens,
                         encoder_hidden_states=frame_embeds,
                         encoder_attention_mask=frame_atts,
@@ -343,18 +378,19 @@ class BLIVAMistral(Blip2Base):
             atts_add_feature_llm = torch.cat(add_atts_llm, dim=1)
         else:
             with self.maybe_autocast():
-                image_embeds = self.ln_vision(self.visual_encoder(image))
-
-                image_features= self.visual_encoder.get_intermediate_layers(image)[-2] # [batch_size, 257, 1408]
-                
+                image_features= self.visual_encoder(image).last_hidden_state
+                image_embeds = self.ln_vision(image_features)
+                # image_features= self.visual_encoder.get_intermediate_layers(image)[-2] # [batch_size, 257, 1408]
+            
+            image_embeds = self.vision_projection_layer_1(image_embeds) # projected -> [batch_size, 257, 1408]
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
            
             image_features = image_features[:, 1:] 
-            add_feature_llm = self.vision_project(image_features) 
+            add_feature_llm = self.vision_projection_layer_2(self.vision_projection_layer_1(image_features))
             atts_add_feature_llm = torch.ones(add_feature_llm.size()[:-1], dtype=torch.long).to(image.device)
 
             if self.qformer_text_input:
-                query_output = self.Qformer.bert(
+                query_output = self.Qformer(
                     text_Qformer.input_ids,
                     attention_mask=Qformer_atts,
                     query_embeds=query_tokens,
@@ -363,7 +399,7 @@ class BLIVAMistral(Blip2Base):
                     return_dict=True,
                 )
             else:
-                query_output = self.Qformer.bert(
+                query_output = self.Qformer(
                     query_embeds=query_tokens,
                     encoder_hidden_states=image_embeds,
                     encoder_attention_mask=image_atts,
@@ -774,7 +810,7 @@ class BLIVAMistral(Blip2Base):
             apply_lemmatizer=apply_lemmatizer,
             qformer_text_input=qformer_text_input,
         )
-
+        print("Loading the model from checkpoint")
         model.load_checkpoint_from_config(cfg)
 
         return model

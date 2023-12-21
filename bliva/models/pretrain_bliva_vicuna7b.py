@@ -161,7 +161,7 @@ class PretrainBLIVAVicuna(Blip2Base):
             torch.ones(atts_add_feature_llm.size(), dtype=torch.long).to(image.device).fill_(-100)
         )
         targets = torch.cat([empty_add_targets, targets], dim=1)
-
+        print("embedding", self.llm_model.get_input_embeddings(), llm_tokens['input_ids'].size(), add_feature_llm.size())
         inputs_embeds = self.llm_model.get_input_embeddings()(llm_tokens['input_ids'])
         inputs_embeds = torch.cat([add_feature_llm, inputs_embeds], dim=1)
         attention_mask = torch.cat([atts_add_feature_llm, llm_tokens['attention_mask']], dim=1)

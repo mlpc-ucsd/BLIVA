@@ -18,7 +18,7 @@ model:
   num_query_token: 32
 
   # path to Vicuna checkpoint
-  llm_model: "path to hf_vicuna_7b"
+  llm_model: "mistralai/Mistral-7B-Instruct-v0.2"
 
   # generation configs
   prompt: ""

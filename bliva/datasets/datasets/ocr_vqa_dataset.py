@@ -23,30 +23,44 @@ class OCRVQADataset(BasePromptDataset):
             "Use the provided image to answer the question: {} Provide your answer as short as possible:",
             "What is the answer to the following question?{}",
             "The question {} can be answered using the image. A short answer is"]
-    
-    def __getitem__(self, index):
-        ann = self.annotation['data'][index]
+        self.ann_list = list(self.annotation.keys())
+    def __len__(self):
+        return len(self.annotation)
 
-        image_path = os.path.join(self.vis_root, ann["image_id"] + '.jpg')
-        image = Image.open(image_path).convert("RGB")
-
-        image = self.vis_processor(image)
-        question = self.text_processor(ann["question"])
-
-        choice = np.random.choice(len(self.prompts))
-
-        text_input = self.prompts[choice].format(question)
-
-        answer = ann["answers"][0]
-        if len(ann["answers"]) > 1:
-            answer_weight = {}
-            for answer in ann["answers"]:
-                if answer in answer_weight.keys():
-                    answer_weight[answer] += 1 / len(ann["answers"])
-                else:
-                    answer_weight[answer] = 1 / len(ann["answers"])
+    def _add_instance_ids(self, key="instance_id"):
+        # for idx, ann in enumerate(self.annotation['data']):
+        #     ann[key] = str(idx)
+        pass
             
-            answer = max(answer_weight, key=answer_weight.get)
+    def __getitem__(self, index):
+        image_key = self.ann_list[index]
+        ann = self.annotation[image_key]
+
+        image_path = os.path.join(self.vis_root, str(image_key) + '.jpg')
+        try:
+            image = Image.open(image_path).convert("RGB")
+    
+            image = self.vis_processor(image)
+            question = self.text_processor(ann["questions"][0])
+    
+            choice = np.random.choice(len(self.prompts))
+    
+            text_input = self.prompts[choice].format(question)
+    
+            answer = ann["answers"][0]
+            if len(ann["answers"]) > 1:
+                answer_weight = {}
+                for answer in ann["answers"]:
+                    if answer in answer_weight.keys():
+                        answer_weight[answer] += 1 / len(ann["answers"])
+                    else:
+                        answer_weight[answer] = 1 / len(ann["answers"])
+                
+                answer = max(answer_weight, key=answer_weight.get)
+        except Exception as e:
+            return {
+                
+            }
 
         return {
             "image": image,
